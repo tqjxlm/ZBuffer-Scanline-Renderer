@@ -16,7 +16,7 @@ ADD_DEFINITIONS(-D_UNICODE)
 
 include_directories(include)
 file(GLOB SOURCES src/*.cpp include/*.h resources/shaders/*)
-set(ENV{RSC_DIR} ${CMAKE_SOURCE_DIR}/resources)
+set(ENV{RSC_DIR} ${CMAKE_SOURCE_DIR})
 
 ###############################################################################
 ## target definitions #########################################################
@@ -77,13 +77,7 @@ endif()
 ## installation ###############################################################
 ###############################################################################
 
-foreach(ITEM ${CMAKE_SOURCE_DIR}/resources)
-    IF( IS_DIRECTORY "${ITEM}" )
-      LIST( APPEND DIRS_TO_DEPLOY "${ITEM}" )
-   ENDIF()
-endforeach()
-install(DIRECTORY ${DIRS_TO_DEPLOY} DESTINATION ${CMAKE_INSTALL_PREFIX})
-install(TARGETS ScanLine DESTINATION ${CMAKE_INSTALL_PREFIX})
-
 file(GLOB DEPS ${THIRD_PARTY_DIR}/bin/*.dll)
 install(FILES ${DEPS} DESTINATION ${CMAKE_INSTALL_PREFIX})
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/resources DESTINATION ${CMAKE_INSTALL_PREFIX})
+install(TARGETS ScanLine DESTINATION ${CMAKE_INSTALL_PREFIX})

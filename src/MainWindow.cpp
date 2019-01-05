@@ -214,7 +214,7 @@ void  MainWindow::initOpenGL()
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
 
-    _window = glfwCreateWindow(_windowWidth, _windowHeight, "Z-buffer Scanline DEMO by Qt Li", nullptr, nullptr); // Windowed
+    _window = glfwCreateWindow(_windowWidth, _windowHeight, "Z-buffer Scanline by tqjxlm", nullptr, nullptr); // Windowed
     glfwMakeContextCurrent(_window);
 
     // Set the required callback functions
@@ -252,7 +252,7 @@ void  MainWindow::initPixelBuffer()
     glBufferDataARB(GL_PIXEL_UNPACK_BUFFER_ARB, _bufferSize, 0, GL_STREAM_DRAW_ARB);
     glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, 0);
 
-    _screenShader = new Shader("shaders/screenShader.vert", "shaders/screenShader.frag");
+    _screenShader = new Shader("resources/shaders/screenShader.vert", "resources/shaders/screenShader.frag");
 }
 
 void  MainWindow::initFrameBuffer()
@@ -303,31 +303,6 @@ void  MainWindow::drawToScreen()
     renderQuad();
 }
 
-// Direct draw version
-// void MainWindow::drawToScreen()
-// {
-////glClear(GL_COLOR_BUFFER_BIT);
-// glPushMatrix();
-// glTranslatef(0, 0, -3.0f);
-// glRotatef(0, 1, 0, 0);   // pitch
-// glRotatef(0, 0, 1, 0);   // heading
-//
-// glBindTexture(GL_TEXTURE_2D, _screenTexture);
-// glColor4f(1, 1, 1, 1);
-// glBegin(GL_QUADS);
-// glNormal3f(0, 0, 1);
-// glTexCoord2f(0.0f, 0.0f);   glVertex3f(-1.0f, -1.0f, 0.0f);
-// glTexCoord2f(1.0f, 0.0f);   glVertex3f(1.0f, -1.0f, 0.0f);
-// glTexCoord2f(1.0f, 1.0f);   glVertex3f(1.0f, 1.0f, 0.0f);
-// glTexCoord2f(0.0f, 1.0f);   glVertex3f(-1.0f, 1.0f, 0.0f);
-// glEnd();
-//
-// glPopMatrix();
-//
-//// unbind texture
-// glBindTexture(GL_TEXTURE_2D, 0);
-// }
-
 void  MainWindow::renderQuad()
 {
     static GLuint  quadVAO;
@@ -373,7 +348,7 @@ void  MainWindow::loadDrawableObjects()
     case (1):
         model    = glm::translate(model, glm::vec3(0.0, -1.0, 0.0));
         model    = glm::scale(model, glm::vec3(0.01, 0.01, 0.01));
-        resource = _resourceManager.loadModel("models/p21/p21.obj", model);
+        resource = _resourceManager.loadModel("resources/models/p21/p21.obj", model);
 
         if (resource == NULL)
         {
@@ -385,7 +360,7 @@ void  MainWindow::loadDrawableObjects()
     case (2):
         model    = glm::translate(model, glm::vec3(0.0, -0.2, 0.0));
         model    = glm::scale(model, glm::vec3(0.001f, 0.001f, 0.001f));
-        resource = _resourceManager.loadModel("models/house_obj/house_obj.obj", model);
+        resource = _resourceManager.loadModel("resources/models/house_obj/house_obj.obj", model);
 
         if (resource == NULL)
         {
@@ -396,7 +371,7 @@ void  MainWindow::loadDrawableObjects()
         break;
     case (3):
         model    = glm::translate(model, glm::vec3(0, -1, 0));
-        resource = _resourceManager.loadModel("models/T-90/T-90.obj", model);
+        resource = _resourceManager.loadModel("resources/models/T-90/T-90.obj", model);
 
         if (resource == NULL)
         {
@@ -408,7 +383,7 @@ void  MainWindow::loadDrawableObjects()
     case (4):
         model    = glm::scale(model, glm::vec3(0.1, 0.1, 0.1));
         model    = glm::translate(model, glm::vec3(0, -7, 0));
-        resource = _resourceManager.loadModel("models/nanosuit_reflection/nanosuit.obj", model);
+        resource = _resourceManager.loadModel("resources/models/nanosuit_reflection/nanosuit.obj", model);
 
         if (resource == NULL)
         {
