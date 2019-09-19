@@ -6,7 +6,7 @@
 #define SWAP(a, b) { auto tmp = a; a = b; b = tmp; }
 #define CLEARZ(a) glm::vec3(a.x, a.y, 0)
 
-static const float ZERO_LIMIT = 1e-3f;
+static const float FLT_EPS = 1e-3f;
 
 inline glm::vec3 computeNormal(glm::vec3 const& a, glm::vec3 const& b, glm::vec3 const& c)
 {
@@ -20,7 +20,7 @@ inline glm::vec4 computePlane(glm::vec3 const& normal, glm::vec3 const& point)
 
 inline float computeZ(glm::vec4 const& plane, float x, float y)
 {
-    if (abs(plane.z) < ZERO_LIMIT)
+    if (abs(plane.z) < FLT_EPS)
     {
         return 0; // ? resolve outside
     }
@@ -30,7 +30,7 @@ inline float computeZ(glm::vec4 const& plane, float x, float y)
 
 inline float computeY(glm::vec4 const& plane, float x, float z)
 {
-    if (abs(plane.y) < ZERO_LIMIT)
+    if (abs(plane.y) < FLT_EPS)
     {
         return 0; // ? resolve outside
     }
@@ -40,7 +40,7 @@ inline float computeY(glm::vec4 const& plane, float x, float z)
 
 inline float computeX(glm::vec4 const& plane, float y, float z)
 {
-    if (abs(plane.x) < ZERO_LIMIT)
+    if (abs(plane.x) < FLT_EPS)
     {
         return 0; // ? resolve outside
     }
@@ -63,7 +63,7 @@ static const int BOTTOM = 4; // 0100
 static const int TOP    = 8; // 1000
 
 // Compute the bit code for a point (x, y) using the clip rectangle
-inline OutCode ComputeOutCode(double x, double y, int width, int height)
+inline OutCode computeOutCode(double x, double y, int width, int height)
 {
     OutCode code;
 
@@ -93,7 +93,7 @@ inline OutCode ComputeOutCode(double x, double y, int width, int height)
 // Cohen¨CSutherland clipping algorithm clips a line from
 // P0 = (x0, y0) to P1 = (x1, y1) against a rectangle with
 // diagonal from (xmin, ymin) to (xmax, ymax).
-inline ClipResult CohenSutherlandLineClip(glm::vec3 *p1, glm::vec3 *p2, int width, int height)
+inline ClipResult CohenSutherlandLineClip(glm::vec3* p1, glm::vec3* p2, int width, int height)
 {
     float x0 = p1->x;
     float x1 = p2->x;
@@ -101,8 +101,8 @@ inline ClipResult CohenSutherlandLineClip(glm::vec3 *p1, glm::vec3 *p2, int widt
     float y1 = p2->y;
 
     // compute outcodes for P0, P1, and whatever point lies outside the clip rectangle
-    OutCode outcode0 = ComputeOutCode(x0, y0, width, height);
-    OutCode outcode1 = ComputeOutCode(x1, y1, width, height);
+    OutCode outcode0 = computeOutCode(x0, y0, width, height);
+    OutCode outcode1 = computeOutCode(x1, y1, width, height);
 
     while (true)
     {
@@ -160,13 +160,13 @@ inline ClipResult CohenSutherlandLineClip(glm::vec3 *p1, glm::vec3 *p2, int widt
             {
                 x0       = x;
                 y0       = y;
-                outcode0 = ComputeOutCode(x0, y0, width, height);
+                outcode0 = computeOutCode(x0, y0, width, height);
             }
             else
             {
                 x1       = x;
                 y1       = y;
-                outcode1 = ComputeOutCode(x1, y1, width, height);
+                outcode1 = computeOutCode(x1, y1, width, height);
             }
         }
     }

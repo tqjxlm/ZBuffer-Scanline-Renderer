@@ -30,16 +30,12 @@ public:
 
     void        initPixelBuffer();
 
-    void        initFrameBuffer();
-
-    void        initTexture();
-
     void        loadResources();
 
     // Render process
     void        processScene();
 
-    void        renderScene(GLubyte *buffer);
+    void        renderScene(GLubyte* buffer);
 
     void        drawToPBO();
 
@@ -50,31 +46,28 @@ public:
     // Input
     void        doMovement();
 
-    static void keyboardEvent(GLFWwindow *window,
+    static void keyboardEvent(GLFWwindow* window,
                               int         key,
                               int         scancode,
                               int         action,
                               int         mode);
 
-    static void cursorMoveEvent(GLFWwindow *window,
+    static void cursorMoveEvent(GLFWwindow* window,
                                 double      xpos,
                                 double      ypos);
 
-    static void scrollCallEvent(GLFWwindow *window,
+    static void scrollCallEvent(GLFWwindow* window,
                                 double      xoffset,
                                 double      yoffset);
 
-    static void mouseButtonEvent(GLFWwindow *window,
+    static void mouseButtonEvent(GLFWwindow* window,
                                  int         button,
                                  int         action,
                                  int         mode);
 
-    // Resources management
-    void loadDrawableObjects();
-
     void setMode(int mode)
     {
-        showModel = mode;
+        showModel_ = mode;
     }
 
     // Error handle
@@ -90,48 +83,48 @@ public:
 
 private:
 
-    static MainWindow *instance;
+    static MainWindow* instance_;
 
     // Control
-    Camera _camera;
-    static bool keys[1024];
-    static double lastX;
-    static double lastY;
-    static bool firstMouse;
-    static bool leftPushed;
-    static bool rightPushed;
-    static bool isRendering;
-    static int showModel;
+    Camera camera_;
+    static bool keys_[1024];
+    static double lastX_;
+    static double lastY_;
+    static bool firstMouse_;
+    static bool leftPushed_;
+    static bool rightPushed_;
+    static bool isRendering_;
+    static int showModel_;
 
     // Frame
-    static float deltaTime;
-    static float lastFrame;
-    static float currentFrame;
-    static float timerFrame;
+    static float deltaTime_;
+    static float lastFrame_;
+    static float currentFrame_;
+    static float timerFrame_;
 
     // OpenGL
-    GLFWwindow *_window;
-    Shader *_screenShader;
-    GLuint _screenTexture;
-    GLuint _pbo[2];
-    GLubyte *_textureImage[2];
+    GLFWwindow* window_;
+    Shader* screenShader_;
+    GLuint screenTexture_;
+    GLuint PBOs_[2];
+    GLubyte* textureImages_[2];
 
     // Custom pipeline
-    ZBufferScanLine *_scanLine;
-    ResourceManager _resourceManager;
-    std::vector<DrawableObject *>_drawableObjects;
+    ZBufferScanLine* scanLine_;
+    ResourceManager resourceManager_;
+    std::vector<DrawableObject *>drawableObjects_;
 
     // Global settings
-    int _samples       = 2;
-    int _windowWidth   = 1024;
-    int _windowHeight  = 768;
-    int _textureWidth  = _windowWidth * _samples;
-    int _textureHeight = _windowHeight * _samples;
-    float _nearPlane   = 0.1f;
-    float _farPlane    = 100.0f;
-    int _bufferSize    = _textureWidth * _textureHeight * 4;
+    int samples_       = 2;
+    int windowWidth_   = 1024;
+    int windowHeight_  = 768;
+    int textureWidth_  = windowWidth_ * samples_;
+    int textureHeight_ = windowHeight_ * samples_;
+    float nearPlane_   = 0.1f;
+    float farPlane_    = 100.0f;
+    int bufferSize_    = textureWidth_ * textureHeight_ * 4;
 
     // Global matrices
-    glm::mat4 _viewMatrix;
-    glm::mat4 _projectionMatrix;
+    glm::mat4 viewMatrix_;
+    glm::mat4 projectionMatrix_;
 };

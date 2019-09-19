@@ -14,17 +14,17 @@ ResourceManager::ResourceManager()
 
 ResourceManager::~ResourceManager()
 {
-    for (auto& resource: _loadedGeometries)
+    for (auto& resource: loadedGeometries_)
     {
         delete resource.second;
     }
 
-    for (auto& resource: _loadedTextures)
+    for (auto& resource: loadedTextures_)
     {
         delete resource.second;
     }
 
-    for (auto& object: _loadedObjects)
+    for (auto& object: loadedObjects_)
     {
         delete object.second;
     }
@@ -32,19 +32,19 @@ ResourceManager::~ResourceManager()
 
 DrawableObject * ResourceManager::loadCube(const glm::mat4& modelMatrix, string id)
 {
-    auto loadedResource = _loadedGeometries.find("Cube");
+    auto loadedResource = loadedGeometries_.find("Cube");
 
     // If resource does not exists
-    if (loadedResource == _loadedGeometries.end())
+    if (loadedResource == loadedGeometries_.end())
     {
-        GeometryResource *resource = new GeometryResource;
+        GeometryResource* resource = new GeometryResource;
 
         // Process: Quad -> Point
         for (int quad = 0; quad < 6; quad++)
         {
             for (int point = 0; point < 4; point++)
             {
-                Geometry::Vertice *vertice = new Geometry::Vertice;
+                Geometry::Vertice* vertice = new Geometry::Vertice;
                 vertice->position =
                     glm::vec3(cubeVertices[quad][point][0], cubeVertices[quad][point][1], cubeVertices[quad][point][2]);
                 fillColor(vertice->color, cubeColors[quad]);
@@ -52,13 +52,13 @@ DrawableObject * ResourceManager::loadCube(const glm::mat4& modelMatrix, string 
             }
 
             vector<int> indices  = { quad * 4 + 0, quad * 4 + 1, quad * 4 + 2, quad * 4 + 3 };
-            Geometry::Face *face = new Geometry::Face(&resource->vertices);
+            Geometry::Face* face = new Geometry::Face(&resource->vertices);
             face->indices = indices;
             resource->faces.push_back(face);
         }
 
         // Record object
-        loadedResource = _loadedGeometries.insert_or_assign(string("Cube"), resource).first;
+        loadedResource = loadedGeometries_.insert_or_assign(string("Cube"), resource).first;
     }
 
     // Generate drawable object with the loaded resource
@@ -68,7 +68,7 @@ DrawableObject * ResourceManager::loadCube(const glm::mat4& modelMatrix, string 
         id = "Cube" + (count++);
     }
 
-    auto inserted = _loadedObjects.insert_or_assign(id, new DrawableObject(loadedResource->second, modelMatrix));
+    auto inserted = loadedObjects_.insert_or_assign(id, new DrawableObject(loadedResource->second, modelMatrix));
 
     return inserted.first->second;
 }
@@ -111,24 +111,24 @@ DrawableObject * ResourceManager::loadTriangle(const glm::vec4& color, const glm
         static_cast<unsigned char>(color.a) };
 
     // Generate a new polygon resource
-    GeometryResource *resource = new GeometryResource;
+    GeometryResource* resource = new GeometryResource;
 
     for (int i = 0; i < sizeof(triangleVertices) / sizeof(triangleVertices[0]); i++)
     {
-        Geometry::Vertice *vertice = new Geometry::Vertice;
+        Geometry::Vertice* vertice = new Geometry::Vertice;
         vertice->position = glm::vec3(triangleVertices[i][0], triangleVertices[i][1], triangleVertices[i][2]);
         fillColor(vertice->color, intColor);
         resource->vertices.push_back(vertice);
     }
 
-    Geometry::Face *face = new Geometry::Face(&resource->vertices);
+    Geometry::Face* face = new Geometry::Face(&resource->vertices);
     face->indices = triIndice;
     resource->faces.push_back(face);
 
-    auto loadedResource = _loadedGeometries.insert_or_assign(string("Triangle"), resource).first;
+    auto loadedResource = loadedGeometries_.insert_or_assign(string("Triangle"), resource).first;
 
     // Generate drawable object with the loaded resource
-    auto inserted = _loadedObjects.insert_or_assign(id, new DrawableObject(loadedResource->second, modelMatrix));
+    auto inserted = loadedObjects_.insert_or_assign(id, new DrawableObject(loadedResource->second, modelMatrix));
 
     return inserted.first->second;
 }
@@ -149,24 +149,24 @@ DrawableObject * ResourceManager::loadQuad(const glm::vec4& color, const glm::ma
         static_cast<unsigned char>(color.a) };
 
     // Generate a new polygon resource
-    GeometryResource *resource = new GeometryResource;
+    GeometryResource* resource = new GeometryResource;
 
     for (int i = 0; i < sizeof(quadVertices) / sizeof(quadVertices[0]); i++)
     {
-        Geometry::Vertice *vertice = new Geometry::Vertice;
+        Geometry::Vertice* vertice = new Geometry::Vertice;
         vertice->position = glm::vec3(quadVertices[i][0], quadVertices[i][1], quadVertices[i][2]);
         fillColor(vertice->color, triColor);
         resource->vertices.push_back(vertice);
     }
 
-    Geometry::Face *face = new Geometry::Face(&resource->vertices);
+    Geometry::Face* face = new Geometry::Face(&resource->vertices);
     face->indices = quadIndice;
     resource->faces.push_back(face);
 
-    auto loadedResource = _loadedGeometries.insert_or_assign(string("Quad"), resource).first;
+    auto loadedResource = loadedGeometries_.insert_or_assign(string("Quad"), resource).first;
 
     // Generate drawable object with the loaded resource
-    auto inserted = _loadedObjects.insert_or_assign(id, new DrawableObject(loadedResource->second, modelMatrix));
+    auto inserted = loadedObjects_.insert_or_assign(id, new DrawableObject(loadedResource->second, modelMatrix));
 
     return inserted.first->second;
 }
@@ -178,11 +178,11 @@ DrawableObject * ResourceManager::loadModel(const string& path, const glm::mat4&
         id = path;
     }
 
-    auto loadedObject = _loadedObjects.find(id);
-    DrawableObject *loadedModel;
+    auto loadedObject = loadedObjects_.find(id);
+    DrawableObject* loadedModel;
 
     // If resource does not exists
-    if (loadedObject == _loadedObjects.end())
+    if (loadedObject == loadedObjects_.end())
     {
         Model model(this);
         model.loadModel(path);
@@ -195,23 +195,23 @@ DrawableObject * ResourceManager::loadModel(const string& path, const glm::mat4&
         loadedModel = new DrawableObject(*loadedObject->second);
     }
 
-    if (loadedModel == NULL)
+    if (loadedModel == nullptr)
     {
         cout << "Unable to load resource: " << path << endl;
 
-        return NULL;
+        return nullptr;
     }
 
     // Generate drawable object with the loaded resource
     loadedModel->modelMatrix = modelMatrix;
-    auto inserted = _loadedObjects.insert_or_assign(id, loadedModel);
+    auto inserted = loadedObjects_.insert_or_assign(id, loadedModel);
 
     return inserted.first->second;
 }
 
 DrawableObject * ResourceManager::loadTexturedQuad(const string& texturePath, const glm::mat4& modelMatrix, string id)
 {
-    DrawableObject *loadedQuad = loadQuad(glm::vec4(255, 255, 255, 255), modelMatrix, id);
+    DrawableObject* loadedQuad = loadQuad(glm::vec4(255, 255, 255, 255), modelMatrix, id);
 
     for (int i = 0; i < sizeof(texCoords) / sizeof(texCoords[0]); i++)
     {
@@ -229,21 +229,21 @@ Geometry::Texture * ResourceManager::TextureFromFile(const string& path)
     cout << "loading texture: " << path << endl;
 
     int width, height, channel;
-    unsigned char *image;
+    unsigned char* image;
     try
     {
         image = SOIL_load_image(path.c_str(), &width, &height, &channel, SOIL_LOAD_RGBA);
     }
     catch (...)
     {
-        image = NULL;
+        image = nullptr;
     }
-    if (image != NULL)
+    if (image != nullptr)
     {
         return new Geometry::Texture(image, width, height, 4);
     }
     else
     {
-        return NULL;
+        return nullptr;
     }
 }

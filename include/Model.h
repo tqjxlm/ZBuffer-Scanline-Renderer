@@ -6,7 +6,6 @@
 
 #include <string>
 #include <vector>
-using namespace std;
 
 class GeometryResource;
 class TextureResource;
@@ -19,16 +18,16 @@ public:
     Model()
     {}
 
-    Model(ResourceManager *manager) :
+    Model(ResourceManager* manager) :
         parentManager(manager)
     {}
 
-    Model(char *path)
+    Model(char* path)
     {
         this->loadModel(path);
     }
 
-    void            loadModel(string path);
+    void            loadModel(std::string path);
 
     DrawableObject* getDrawableObject()
     {
@@ -37,22 +36,22 @@ public:
 
 private:
 
-    void processNode(aiNode        *node,
-                     const aiScene *scene);
+    void processNode(aiNode       * node,
+                     const aiScene* scene);
 
-    void processMesh(aiMesh        *mesh,
-                     const aiScene *scene);
+    void processMesh(aiMesh       * mesh,
+                     const aiScene* scene);
 
-    void loadMaterialTextures(aiMaterial       *mat,
+    void loadMaterialTextures(aiMaterial      * mat,
                               aiTextureType     type,
-                              string            typeName,
-                              GeometryResource *geometryRc);
+                              std::string       typeName,
+                              GeometryResource* geometryRc);
 
 private:
 
-    ResourceManager *parentManager;
-    DrawableObject *object;
-    vector<GeometryResource *>geometryRcs;
-    string directory;
+    ResourceManager* parentManager;
+    DrawableObject* object;
+    std::vector<GeometryResource *>geometryRcs;
+    std::string directory;
     int totalTextureLoaded = 0;
 };

@@ -19,7 +19,7 @@ public:
 
     std::string type;
     std::string path;
-    Geometry::Texture *texture;
+    Geometry::Texture* texture;
 };
 
 class GeometryResource {
@@ -49,7 +49,7 @@ public:
 class DrawableObject {
 public:
 
-    DrawableObject(GeometryResource *geometry, glm::mat4 modelMatrix = glm::mat4()) :
+    DrawableObject(GeometryResource* geometry, glm::mat4 modelMatrix = glm::mat4()) :
         modelMatrix(modelMatrix), useTexture(false)
     {
         this->geometries.push_back(geometry);
@@ -99,11 +99,11 @@ public:
 
     DrawableObject* getDrawableObject(std::string key)
     {
-        auto loaded = _loadedObjects.find(key);
+        auto loaded = loadedObjects_.find(key);
 
-        if (loaded == _loadedObjects.end())
+        if (loaded == loadedObjects_.end())
         {
-            return NULL;
+            return nullptr;
         }
         else
         {
@@ -113,11 +113,11 @@ public:
 
     GeometryResource* getGeometryResource(std::string key)
     {
-        auto loaded = _loadedGeometries.find(key);
+        auto loaded = loadedGeometries_.find(key);
 
-        if (loaded == _loadedGeometries.end())
+        if (loaded == loadedGeometries_.end())
         {
-            return NULL;
+            return nullptr;
         }
         else
         {
@@ -127,11 +127,11 @@ public:
 
     TextureResource* getTextureResource(std::string key)
     {
-        auto loaded = _loadedTextures.find(key);
+        auto loaded = loadedTextures_.find(key);
 
-        if (loaded == _loadedTextures.end())
+        if (loaded == loadedTextures_.end())
         {
-            return NULL;
+            return nullptr;
         }
         else
         {
@@ -141,19 +141,19 @@ public:
 
     TextureResource* loadTextureResource(const std::string& path, const std::string& typeName, std::string id)
     {
-        TextureResource   *resource = new TextureResource;
-        Geometry::Texture *texture  = TextureFromFile(path);
+        TextureResource  * resource = new TextureResource;
+        Geometry::Texture* texture  = TextureFromFile(path);
 
-        if (texture == NULL)
+        if (texture == nullptr)
         {
-            return NULL;
+            return nullptr;
         }
 
         resource->texture = texture;
         resource->type    = typeName;
         resource->path    = id;
 
-        _loadedTextures.insert_or_assign(id, resource);
+        loadedTextures_.insert_or_assign(id, resource);
 
         return resource;
     }
@@ -162,7 +162,9 @@ private:
 
     Geometry::Texture* TextureFromFile(const std::string& path);
 
-    std::unordered_map<std::string, DrawableObject *>_loadedObjects;
-    std::unordered_map<std::string, GeometryResource *>_loadedGeometries;
-    std::unordered_map<std::string, TextureResource *>_loadedTextures;
+private:
+
+    std::unordered_map<std::string, DrawableObject *>loadedObjects_;
+    std::unordered_map<std::string, GeometryResource *>loadedGeometries_;
+    std::unordered_map<std::string, TextureResource *>loadedTextures_;
 };

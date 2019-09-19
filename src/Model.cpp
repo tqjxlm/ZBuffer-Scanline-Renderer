@@ -1,7 +1,9 @@
 #include "Model.h"
-#include <GLFW/glfw3.h>
 
 #include <iostream>
+using namespace std;
+
+#include <GLFW/glfw3.h>
 #include <SOIL/SOIL.h>
 
 #include "Geometry.h"
@@ -10,16 +12,19 @@
 void Model::loadModel(string path)
 {
     Assimp::Importer import;
-    const aiScene   *scene = import.ReadFile(path,
-
-// 0);
-                                             aiProcess_OptimizeMeshes | aiProcess_OptimizeGraph
-                                             | aiProcess_Triangulate);
+    auto readOptions = aiProcess_OptimizeMeshes |
+                       aiProcess_OptimizeGraph |
+                       aiProcess_Triangulate |
+                       aiProcess_SplitLargeMeshes |
+                       aiProcess_ImproveCacheLocality |
+                       aiProcess_RemoveRedundantMaterials |
+                       aiProcess_JoinIdenticalVertices;
+    const aiScene* scene = import.ReadFile(path, readOptions);
 
     if (!scene || (scene->mFlags == AI_SCENE_FLAGS_INCOMPLETE) || !scene->mRootNode)
     {
         cout << "ERROR::ASSIMP::" << import.GetErrorString() << endl;
-        object = NULL;
+        object = nullptr;
 
         return;
     }
@@ -36,12 +41,12 @@ void Model::loadModel(string path)
     }
 }
 
-void Model::processNode(aiNode *node, const aiScene *scene)
+void Model::processNode(aiNode* node, const aiScene* scene)
 {
     // Process all the node's meshes (if any)
     for (unsigned int i = 0; i < node->mNumMeshes; i++)
     {
-        aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
+        aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
         this->processMesh(mesh, scene);
     }
 
@@ -52,14 +57,14 @@ void Model::processNode(aiNode *node, const aiScene *scene)
     }
 }
 
-void Model::processMesh(aiMesh *mesh, const aiScene *scene)
+void Model::processMesh(aiMesh* mesh, const aiScene* scene)
 {
     auto geometryRc = new GeometryResource;
     int  triCnt     = 0;
 
     for (unsigned int i = 0; i < mesh->mNumVertices; i++)
     {
-        Geometry::Vertice *vertice = new Geometry::Vertice;
+        Geometry::Vertice* vertice = new Geometry::Vertice;
 
         vertice->position = glm::vec3(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z);
 
@@ -99,7 +104,7 @@ void Model::processMesh(aiMesh *mesh, const aiScene *scene)
     for (unsigned int i = 0; i < mesh->mNumFaces; i++)
     {
         aiFace face              = mesh->mFaces[i];
-        Geometry::Face *geomFace = new Geometry::Face(&geometryRc->vertices);
+        Geometry::Face* geomFace = new Geometry::Face(&geometryRc->vertices);
 
         for (unsigned int j = 0; j < face.mNumIndices; j++)
         {
@@ -113,7 +118,7 @@ void Model::processMesh(aiMesh *mesh, const aiScene *scene)
     if (mesh->mMaterialIndex >= 0)
     {
         // TODO: Support other texture map
-        aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
+        aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
 
         this->loadMaterialTextures(material,
                                    aiTextureType_DIFFUSE, "texture_diffuse", geometryRc);
@@ -128,7 +133,7 @@ void Model::processMesh(aiMesh *mesh, const aiScene *scene)
     geometryRcs.push_back(geometryRc);
 }
 
-void Model::loadMaterialTextures(aiMaterial *mat, aiTextureType type, string typeName, GeometryResource *geometryRc)
+void Model::loadMaterialTextures(aiMaterial* mat, aiTextureType type, string typeName, GeometryResource* geometryRc)
 {
     for (unsigned int i = 0; i < mat->GetTextureCount(type); i++)
     {
@@ -140,13 +145,13 @@ void Model::loadMaterialTextures(aiMaterial *mat, aiTextureType type, string typ
 
         auto loadedTexture = parentManager->getTextureResource(filename);
 
-        if (loadedTexture == NULL)
+        if (loadedTexture == nullptr)
         {
             // If texture hasn't been loaded already, load it
             loadedTexture = parentManager->loadTextureResource(filename, typeName, filename);
         }
 
-        if (loadedTexture != NULL)
+        if (loadedTexture != nullptr)
         {
             geometryRc->textures.push_back(loadedTexture);
             totalTextureLoaded++;
