@@ -3,9 +3,6 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#define SWAP(a, b) { auto tmp = a; a = b; b = tmp; }
-#define CLEARZ(a) glm::vec3(a.x, a.y, 0)
-
 static const float FLT_EPS = 1e-3f;
 
 inline glm::vec3 computeNormal(glm::vec3 const& a, glm::vec3 const& b, glm::vec3 const& c)
@@ -93,12 +90,12 @@ inline OutCode computeOutCode(double x, double y, int width, int height)
 // Cohen¨CSutherland clipping algorithm clips a line from
 // P0 = (x0, y0) to P1 = (x1, y1) against a rectangle with
 // diagonal from (xmin, ymin) to (xmax, ymax).
-inline ClipResult CohenSutherlandLineClip(glm::vec3* p1, glm::vec3* p2, int width, int height)
+inline ClipResult CohenSutherlandLineClip(glm::vec3& p1, glm::vec3& p2, int width, int height)
 {
-    float x0 = p1->x;
-    float x1 = p2->x;
-    float y0 = p1->y;
-    float y1 = p2->y;
+    float x0 = p1.x;
+    float x1 = p2.x;
+    float y0 = p1.y;
+    float y1 = p2.y;
 
     // compute outcodes for P0, P1, and whatever point lies outside the clip rectangle
     OutCode outcode0 = computeOutCode(x0, y0, width, height);
@@ -108,10 +105,10 @@ inline ClipResult CohenSutherlandLineClip(glm::vec3* p1, glm::vec3* p2, int widt
     {
         if (!(outcode0 | outcode1)) // Bitwise OR is 0. Trivially accept and get out of loop
         {
-            p1->x = x0;
-            p1->y = y0;
-            p2->x = x1;
-            p2->y = y1;
+            p1.x = x0;
+            p1.y = y0;
+            p2.x = x1;
+            p2.y = y1;
 
             return ACCEPTED;
         }

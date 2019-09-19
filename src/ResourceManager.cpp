@@ -47,12 +47,12 @@ DrawableObject * ResourceManager::loadCube(const glm::mat4& modelMatrix, string 
                 Geometry::Vertice* vertice = new Geometry::Vertice;
                 vertice->position =
                     glm::vec3(cubeVertices[quad][point][0], cubeVertices[quad][point][1], cubeVertices[quad][point][2]);
-                fillColor(vertice->color, cubeColors[quad]);
+                colorCpy(vertice->color, cubeColors[quad]);
                 resource->vertices.push_back(vertice);
             }
 
             vector<int> indices  = { quad * 4 + 0, quad * 4 + 1, quad * 4 + 2, quad * 4 + 3 };
-            Geometry::Face* face = new Geometry::Face(&resource->vertices);
+            Geometry::Face* face = new Geometry::Face(resource->vertices);
             face->indices = indices;
             resource->faces.push_back(face);
         }
@@ -84,7 +84,7 @@ DrawableObject * ResourceManager::loadCube(const glm::vec4& color, const glm::ma
 
     for (auto vertice: object->geometries[0]->vertices)
     {
-        fillColor(vertice->color, intColor);
+        colorCpy(vertice->color, intColor);
     }
 
     return object;
@@ -117,11 +117,11 @@ DrawableObject * ResourceManager::loadTriangle(const glm::vec4& color, const glm
     {
         Geometry::Vertice* vertice = new Geometry::Vertice;
         vertice->position = glm::vec3(triangleVertices[i][0], triangleVertices[i][1], triangleVertices[i][2]);
-        fillColor(vertice->color, intColor);
+        colorCpy(vertice->color, intColor);
         resource->vertices.push_back(vertice);
     }
 
-    Geometry::Face* face = new Geometry::Face(&resource->vertices);
+    Geometry::Face* face = new Geometry::Face(resource->vertices);
     face->indices = triIndice;
     resource->faces.push_back(face);
 
@@ -155,11 +155,11 @@ DrawableObject * ResourceManager::loadQuad(const glm::vec4& color, const glm::ma
     {
         Geometry::Vertice* vertice = new Geometry::Vertice;
         vertice->position = glm::vec3(quadVertices[i][0], quadVertices[i][1], quadVertices[i][2]);
-        fillColor(vertice->color, triColor);
+        colorCpy(vertice->color, triColor);
         resource->vertices.push_back(vertice);
     }
 
-    Geometry::Face* face = new Geometry::Face(&resource->vertices);
+    Geometry::Face* face = new Geometry::Face(resource->vertices);
     face->indices = quadIndice;
     resource->faces.push_back(face);
 

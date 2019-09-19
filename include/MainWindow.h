@@ -33,7 +33,7 @@ public:
     void        loadResources();
 
     // Render process
-    void        processScene();
+    void        prepareScene();
 
     void        renderScene(GLubyte* buffer);
 
@@ -106,6 +106,8 @@ private:
     GLFWwindow* window_;
     Shader* screenShader_;
     GLuint screenTexture_;
+
+    // TODO: I used double PBO here, but it won't benefit unless there's a seperate render thread
     GLuint PBOs_[2];
     GLubyte* textureImages_[2];
 

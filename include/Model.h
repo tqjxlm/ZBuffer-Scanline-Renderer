@@ -19,7 +19,7 @@ public:
     {}
 
     Model(ResourceManager* manager) :
-        parentManager(manager)
+        parentManager_(manager)
     {}
 
     Model(char* path)
@@ -31,7 +31,7 @@ public:
 
     DrawableObject* getDrawableObject()
     {
-        return object;
+        return drawable_;
     }
 
 private:
@@ -49,9 +49,9 @@ private:
 
 private:
 
-    ResourceManager* parentManager;
-    DrawableObject* object;
-    std::vector<GeometryResource *>geometryRcs;
-    std::string directory;
-    int totalTextureLoaded = 0;
+    ResourceManager* parentManager_;
+    DrawableObject* drawable_;
+    std::vector<GeometryResource *>geometryRcs_;
+    std::string directory_;
+    int totalTextureLoaded_ = 0;
 };

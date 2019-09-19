@@ -5,28 +5,28 @@
 
 #include <vector>
 
-inline void divideColor(unsigned char* dst, int num)
+inline void colorDiv(unsigned char dst[3], int num)
 {
     dst[2] = dst[2] / num; // R -> B
     dst[1] = dst[1] / num; // G -> G
     dst[0] = dst[0] / num; // B -> R
 }
 
-inline void addColor(unsigned char* dst, const unsigned char* src)
+inline void colorAdd(unsigned char dst[3], const unsigned char src[3])
 {
     dst[2] += src[0]; // R -> B
     dst[1] += src[1]; // G -> G
     dst[0] += src[2]; // B -> R
 }
 
-inline void mixColor(unsigned char* dst, const unsigned char* src, float scale)
+inline void colorMix(unsigned char dst[3], const unsigned char src[3], float scale)
 {
     dst[2] += static_cast<unsigned int>(src[0] * scale); // R -> B
     dst[1] += static_cast<unsigned int>(src[1] * scale); // G -> G
     dst[0] += static_cast<unsigned int>(src[2] * scale); // B -> R
 }
 
-inline void fillColor(unsigned char* dst, const unsigned char* src, bool flip = false, bool alpha = false)
+inline void colorCpy(unsigned char* dst, const unsigned char* src, bool flip = false, bool alpha = false)
 {
     if (flip)
     {
@@ -47,11 +47,11 @@ inline void fillColor(unsigned char* dst, const unsigned char* src, bool flip = 
     }
 }
 
-inline void fillColor(unsigned char      * dst,
-                      const unsigned char* src,
-                      const glm::vec3    & scale,
-                      bool                 flip  = false,
-                      bool                 alpha = false)
+inline void colorCpy(unsigned char      * dst,
+                     const unsigned char* src,
+                     const glm::vec3    & scale,
+                     bool                 flip  = false,
+                     bool                 alpha = false)
 {
     if (flip)
     {
@@ -72,7 +72,7 @@ inline void fillColor(unsigned char      * dst,
     }
 }
 
-inline glm::vec4 colorToVec(unsigned char* src)
+inline glm::vec4 colorToVec(unsigned char src[4])
 {
     return glm::vec4(src[0], src[1], src[2], src[3]);
 }
@@ -120,12 +120,12 @@ struct Vertice {
 };
 
 struct Face {
-    Face(std::vector<Vertice *>* vertices) :
+    Face(const std::vector<Vertice *>& vertices) :
         vertices(vertices)
     {}
 
-    std::vector<Vertice *>* vertices;
-    std::vector<int>        indices;
+    std::vector<Vertice *>vertices;
+    std::vector<int>      indices;
 };
 
 struct Texture {

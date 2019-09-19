@@ -24,20 +24,20 @@ void Model::loadModel(string path)
     if (!scene || (scene->mFlags == AI_SCENE_FLAGS_INCOMPLETE) || !scene->mRootNode)
     {
         cout << "ERROR::ASSIMP::" << import.GetErrorString() << endl;
-        object = nullptr;
+        drawable_ = nullptr;
 
         return;
     }
 
-    this->directory = path.substr(0, path.find_last_of('/'));
+    this->directory_ = path.substr(0, path.find_last_of('/'));
 
     this->processNode(scene->mRootNode, scene);
 
-    object = new DrawableObject(geometryRcs);
+    drawable_ = new DrawableObject(geometryRcs_);
 
-    if (totalTextureLoaded > 0)
+    if (totalTextureLoaded_ > 0)
     {
-        object->useTexture = true;
+        drawable_->useTexture = true;
     }
 }
 
@@ -85,7 +85,7 @@ void Model::processMesh(aiMesh* mesh, const aiScene* scene)
                 static_cast<unsigned char>(mesh->mColors[0][i].b * 255),
                 static_cast<unsigned char>(mesh->mColors[0][i].a * 255)
             };
-            fillColor(vertice->color, color);
+            colorCpy(vertice->color, color);
         }
 
         if (mesh->mTextureCoords[0])
@@ -104,7 +104,7 @@ void Model::processMesh(aiMesh* mesh, const aiScene* scene)
     for (unsigned int i = 0; i < mesh->mNumFaces; i++)
     {
         aiFace face              = mesh->mFaces[i];
-        Geometry::Face* geomFace = new Geometry::Face(&geometryRc->vertices);
+        Geometry::Face* geomFace = new Geometry::Face(geometryRc->vertices);
 
         for (unsigned int j = 0; j < face.mNumIndices; j++)
         {
@@ -130,7 +130,7 @@ void Model::processMesh(aiMesh* mesh, const aiScene* scene)
         // aiTextureType_AMBIENT, "texture_ambient", geometryRc);
     }
 
-    geometryRcs.push_back(geometryRc);
+    geometryRcs_.push_back(geometryRc);
 }
 
 void Model::loadMaterialTextures(aiMaterial* mat, aiTextureType type, string typeName, GeometryResource* geometryRc)
@@ -141,20 +141,20 @@ void Model::loadMaterialTextures(aiMaterial* mat, aiTextureType type, string typ
         mat->GetTexture(type, i, &str);
 
         string filename = string(str.C_Str());
-        filename = directory + '/' + filename;
+        filename = directory_ + '/' + filename;
 
-        auto loadedTexture = parentManager->getTextureResource(filename);
+        auto loadedTexture = parentManager_->getTextureResource(filename);
 
         if (loadedTexture == nullptr)
         {
             // If texture hasn't been loaded already, load it
-            loadedTexture = parentManager->loadTextureResource(filename, typeName, filename);
+            loadedTexture = parentManager_->loadTextureResource(filename, typeName, filename);
         }
 
         if (loadedTexture != nullptr)
         {
             geometryRc->textures.push_back(loadedTexture);
-            totalTextureLoaded++;
+            totalTextureLoaded_++;
         }
     }
 }

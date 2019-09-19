@@ -9,58 +9,53 @@ using namespace std;
 #include "ResourceManager.h"
 #include "Geometry.h"
 
+#define SWAP(a, b) { auto tmp = a; a = b; b = tmp; }
+#define CLEARZ(a) glm::vec3(a.x, a.y, 0)
+
 const unsigned char errorColor[4] = {
     255, 0, 0, 255
 };
 static const float  SAME_PIXEL_LIMIT = 0.5f;
 
 // Clip xyz and uv
-inline ClipResult clipEdge(glm::vec3      & p1,
-                           glm::vec3      & p2,
-                           const glm::vec3& p1_o,
-                           const glm::vec3& p2_o,
-                           glm::vec2      & tex1,
-                           glm::vec2      & tex2,
-                           ZPolygon       * zPolygon,
-                           bool             hasTexture,
-                           int              width,
-                           int              height)
+inline ClipResult viewClipping(glm::vec3      & p1,
+                               glm::vec3      & p2,
+                               const glm::vec3& p1_o,
+                               const glm::vec3& p2_o,
+                               bool             hasTexture,
+                               glm::vec2      & tex1,
+                               glm::vec2      & tex2,
+                               ZPolygon       * zPolygon,
+                               int              width,
+                               int              height)
 {
     // Use Cohen-Sutherland clip algorithm
-    ClipResult result = CohenSutherlandLineClip(&p1, &p2, width, height);
+    ClipResult result = CohenSutherlandLineClip(p1, p2, width, height);
 
-    if (result != ACCEPTED)
+    if (result == REJECTED)
     {
         return result;
     }
 
-    // Interpolate other attributes of the cut edge
-    glm::vec2 new1 = tex1;
+    // Interpolate z if the edge is cut
+    p1.z = computeZ(zPolygon->depthPlane, p1.x, p1.y);
+    p2.z = computeZ(zPolygon->depthPlane, p2.x, p2.y);
 
-    if (p1 != p1_o)
+    // Interpolate texture using z
+    if (hasTexture)
     {
-        p1.z = computeZ(zPolygon->depthPlane, p1.x, p1.y);
-        new1 =
-            (tex1 * p1_o.z + glm::length(glm::vec2(p1) - glm::vec2(p1_o)) /
-             glm::length(glm::vec2(p2_o) - glm::vec2(p1_o)) *
-             (tex2 * p2_o.z - tex1 * p1_o.z))
-            / p1.z;
+        float len_o        = glm::length(glm::vec2(p2_o) - glm::vec2(p1_o));
+        glm::vec2 normed_o = tex2 * p2_o.z - tex1 * p1_o.z;
+
+        float ratio1      = glm::length(glm::vec2(p1) - glm::vec2(p1_o)) / len_o;
+        glm::vec2 newTex1 = (tex1 * p1_o.z + ratio1 * normed_o) / p1.z;
+
+        float ratio2      = glm::length(glm::vec2(p2) - glm::vec2(p1_o)) / len_o;
+        glm::vec2 newTex2 = (tex1 * p1_o.z + ratio2 * normed_o) / p2.z;
+
+        tex1 = newTex1;
+        tex2 = newTex2;
     }
-
-    glm::vec2 new2 = tex2;
-
-    if (p2 != p2_o)
-    {
-        p2.z = computeZ(zPolygon->depthPlane, p2.x, p2.y);
-        new2 =
-            (tex1 * p1_o.z + glm::length(glm::vec2(p2) - glm::vec2(p1_o)) /
-             glm::length(glm::vec2(p2_o) - glm::vec2(p1_o)) *
-             (tex2 * p2_o.z - tex1 * p1_o.z))
-            / p2.z;
-    }
-
-    tex1 = new1;
-    tex2 = new2;
 
     return result;
 }
@@ -130,23 +125,23 @@ inline void sampleTexture2D(glm::vec2& texCoord, vector<TextureResource *>* text
         int   channel              = texture->channel;
         float s                    = clipUV(texCoord.s) * (width - 1);
         float t                    = clipUV(texCoord.t) * (height - 1);
-        int   u                    = s - floor(s) <
-                                     ceil(s) - s ? static_cast<int>(floor(s)) : static_cast<int>(ceil(s));
-        int v = height - 1 -
-                (t - floor(t) < ceil(t) - t ? static_cast<int>(floor(t)) : static_cast<int>(ceil(t)));
+        int   u                    = s - floor(s) < ceil(s) - s ?
+                                     static_cast<int>(floor(s)) : static_cast<int>(ceil(s));
+        int v = height - 1 - (t - floor(t) < ceil(t) - t ?
+                              static_cast<int>(floor(t)) : static_cast<int>(ceil(t)));
 
-        addColor(color, texture->image + u * channel + v * width * channel);
+        colorAdd(color, texture->image + u * channel + v * width * channel);
     }
 
-    divideColor(color, static_cast<int>(textures->size()));
+    colorDiv(color, static_cast<int>(textures->size()));
 
     if (scale == glm::vec3(1.0f))
     {
-        fillColor(dst, color);
+        colorCpy(dst, color);
     }
     else
     {
-        fillColor(dst, color, scale);
+        colorCpy(dst, color, scale);
     }
 }
 
@@ -176,19 +171,17 @@ void ZBufferScanLine::reset()
 
     // Clear polygons
     // !! Demo behavior, not considering a second rendering
-    for (auto itr = polygonTables_.begin(); itr != polygonTables_.end(); ++itr)
+    for (auto& polygonTable: polygonTables_)
     {
-        if (itr->empty())
+        if (!polygonTable.empty())
         {
-            continue;
-        }
+            for (ZPolygon* polygon : polygonTable)
+            {
+                delete polygon;
+            }
 
-        for (ZPolygon* polygon: *itr)
-        {
-            delete polygon;
+            polygonTable.clear();
         }
-
-        itr->clear();
     }
 
     numPolygon_ = 0;
@@ -196,6 +189,7 @@ void ZBufferScanLine::reset()
 
 void ZBufferScanLine::draw(GLubyte* buffer)
 {
+    // Scan lines from bottom to up
     frameBuffer_ = buffer + (height_ - 1) * width_ * 4;
 
     for (int i = height_ - 1; i >= 0; i--)
@@ -207,8 +201,6 @@ void ZBufferScanLine::draw(GLubyte* buffer)
 
 void ZBufferScanLine::drawLine(int index)
 {
-    index_ = index;
-
     std::fill(zBuffer_,            zBuffer_ + width_,            -numeric_limits<float>::max());
     std::fill((int *)frameBuffer_, (int *)frameBuffer_ + width_, *((int *)bgColor_));
 
@@ -221,16 +213,16 @@ void ZBufferScanLine::drawLine(int index)
         }
     }
 
-    for (ActivePolygon* polygon: activePolygonTable_)
+    for (ZPolygon* polygon: activePolygonTable_)
     {
         // Insert active edge pairs
         insertActiveEdgePairs(index, *polygon);
     }
 
     // Draw all edge pairs
-    for (auto itr = activeEdgePairTable_.begin(); itr != activeEdgePairTable_.end(); ++itr)
+    for (auto pair: activeEdgePairTable_)
     {
-        drawEdgePair(**itr);
+        drawEdgePair(*pair);
     }
 
     for (auto polygon: activePolygonTable_)
@@ -252,7 +244,7 @@ void ZBufferScanLine::drawLine(int index)
                                activeEdgePairTable_.end());
 
     // Remove finished polygons
-    auto checkPolygon = [](ActivePolygon* polygon) {
+    auto checkPolygon = [](ZPolygon* polygon) {
                             return polygon->dy == 0;
                         };
     activePolygonTable_.erase(std::remove_if(activePolygonTable_.begin(), activePolygonTable_.end(), checkPolygon),
@@ -272,7 +264,6 @@ void ZBufferScanLine::drawEdgePair(ActiveEdgePair& edgePair)
     if ((start_x < 0) || (end_x < 0))
     {
         cout << "bad pair" << endl;
-
         return;
     }
 
@@ -301,7 +292,7 @@ void ZBufferScanLine::drawEdgePair(ActiveEdgePair& edgePair)
             }
             else
             {
-                fillColor(frameBuffer_ + x * 4, edgePair.polygon->color);
+                colorCpy(frameBuffer_ + x * 4, edgePair.polygon->color);
             }
         }
 
@@ -380,7 +371,6 @@ void ZBufferScanLine::drawEdgePair(ActiveEdgePair& edgePair)
             {
                 right        = *(itr);
                 edgePair.z_r = right->z;
-                edgePair.polygon->unpairedEdges.erase(itr);
 
                 // Roll back one line for the rest line
                 left->dy++;
@@ -388,132 +378,43 @@ void ZBufferScanLine::drawEdgePair(ActiveEdgePair& edgePair)
                 edgePair.z_l = z_l_o;
                 edgePair.t_l = t_l_o;
 
+                unPaired.erase(itr);
                 break;
             }
         }
     }
 }
 
-void ZBufferScanLine::insertActiveEdgePairs(int lineIndex, ActivePolygon& polygon)
+void ZBufferScanLine::insertActiveEdgePairs(int lineIndex, ZPolygon& polygon)
 {
     // Find all edges beginning at current line
     vector<ZEdge *> edgesAtThisLine;
 
-    for (ZEdge* edge: polygon.edges)
+    for (ZEdge* edge : polygon.edges)
     {
-        if (edge->y == lineIndex)
+        if ((edge->y == lineIndex) && (edge->dy > 1))
         {
             edgesAtThisLine.push_back(edge);
         }
     }
 
-    sort(edgesAtThisLine.begin(), edgesAtThisLine.end(),
-         [](ZEdge* a, ZEdge* b)
+    ZEdge* left;
+    ZEdge* right;
+
+    if (edgesAtThisLine.empty()) return;
+
+    left = edgesAtThisLine[0];
+
+    if (edgesAtThisLine.size() == 2)
     {
-        return a->x > b->x;
-    });
-
-    // Pair edges up
-    while (!edgesAtThisLine.empty())
-    {
-        ZEdge* left  = nullptr;
-        ZEdge* right = nullptr;
-
-        // Pop one edge from list
-        left = edgesAtThisLine.back();
-        edgesAtThisLine.pop_back();
-
-        float x_left = left->x;
-
-        // Find its pairing edge
-        do
-        {
-            // Find an edge with the same beginning x
-            auto iter = edgesAtThisLine.begin();
-
-            while (iter != edgesAtThisLine.end())
-            {
-                if (abs((*iter)->x - x_left) < 0.5f)
-                {
-                    right = *iter;
-                    edgesAtThisLine.erase(iter);
-                    break;
-                }
-                else
-                {
-                    ++iter;
-                }
-            }
-
-            // Not found
-            if ((left->dy != 1) && (right == nullptr))
-            {
-                break;
-            }
-
-            // Special case: horizontal edge (just discard)
-            if ((right != nullptr) && (right->dy == 1))
-            {
-                // Make sure the left edge is horizontal
-                SWAP(left, right);
-            }
-
-            if (left->dy == 1)
-            {
-                // Duplicate horizontal edge into a horizontal edge pair
-                // activeEdgePairTable_.push_back(generateEdgePair(left, left, polygon));
-
-                // Remove left edge from current pair (as it has been inserted to the horizontal pair)
-                // Next pairing edge should start at its ending x
-                x_left = left->dx;
-                left   = right;
-                right  = nullptr;
-            }
-
-            if (right != nullptr)
-            {
-                break;
-            }
-        } while (left != nullptr);
-
-        // Horizontal edge which has been discarded
-        if (left == nullptr)
-        {
-            continue;
-        }
-
-        // No pairing edge, Pick one line from the unpaired lines
-        if (right == nullptr)
-        {
-            auto& unPaired = polygon.unpairedEdges;
-
-            for (auto itr = unPaired.begin(); itr != unPaired.end(); ++itr)
-            {
-                if (abs((*itr)->y - left->y) < SAME_PIXEL_LIMIT)
-                {
-                    right = *(itr);
-                    polygon.unpairedEdges.erase(itr);
-
-                    break;
-                }
-            }
-        }
-
-        // Still no pairing edge, preserve for later use
-        if (right == nullptr)
-        {
-            polygon.unpairedEdges.push_back(left);
-            continue;
-        }
-
-        // Make sure leftEdge is on the left
-        if ((left->x > right->x + FLT_EPS) || ((abs(left->x - right->x) < FLT_EPS) && (left->dx > right->dx)))
-        {
-            SWAP(left, right);
-        }
+        right = edgesAtThisLine[1];
 
         // Insert the edge pair
         activeEdgePairTable_.push_back(generateEdgePair(left, right, polygon));
+    }
+    else if (edgesAtThisLine.size() == 1)
+    {
+        polygon.unpairedEdges.push_back(left);
     }
 }
 
@@ -521,8 +422,9 @@ ZEdge * ZBufferScanLine::generateEdge(glm::vec3* p1,
                                       glm::vec3* p2,
                                       int      & top,
                                       int      & bottom,
-                                      glm::vec2* tex1,
-                                      glm::vec2* tex2)
+                                      bool       useTexture,
+                                      glm::vec2  tex1,
+                                      glm::vec2  tex2)
 {
     // Generate an edge
     ZEdge* zEdge = new ZEdge;
@@ -535,14 +437,16 @@ ZEdge * ZBufferScanLine::generateEdge(glm::vec3* p1,
     }
 
     // Check for bad edges
-    if ((p1->y < 0) || (p1->y > height_ - 1) || (p1->x < 0) || (p1->y > height_ - 1))
+    if ((p1->y < 0) || (p1->y > height_) || (p1->x < 0) || (p1->y > height_))
     {
         cout << "Bad edge" << endl;
+        return nullptr;
     }
 
-    if ((p2->y < 0) || (p2->y > height_ - 1) || (p2->x < 0) || (p2->y > height_ - 1))
+    if ((p2->y < 0) || (p2->y > height_) || (p2->x < 0) || (p2->y > height_))
     {
         cout << "Bad edge" << endl;
+        return nullptr;
     }
 
     // Range keeping
@@ -565,10 +469,10 @@ ZEdge * ZBufferScanLine::generateEdge(glm::vec3* p1,
     zEdge->z  = p1->z;
     zEdge->dy = edgeTop - edgeBottom + 1;
 
-    if (tex1 != nullptr)
+    if (useTexture)
     {
-        zEdge->texCoord = *tex1;
-        zEdge->dtex     = (*tex2 * p2->z - *tex1 * p1->z) / static_cast<float>(zEdge->dy);
+        zEdge->texCoord = tex1;
+        zEdge->dtex     = (tex2 * p2->z - tex1 * p1->z) / static_cast<float>(zEdge->dy);
     }
 
     if (zEdge->dy != 1)
@@ -586,6 +490,12 @@ ZEdge * ZBufferScanLine::generateEdge(glm::vec3* p1,
 
 ActiveEdgePair * ZBufferScanLine::generateEdgePair(ZEdge* left, ZEdge* right, ZPolygon& polygon)
 {
+    // Make sure leftEdge is on the left
+    if ((left->x > right->x + FLT_EPS) || ((abs(left->x - right->x) < FLT_EPS) && (left->dx > right->dx)))
+    {
+        SWAP(left, right);
+    }
+
     ActiveEdgePair* pair = new ActiveEdgePair;
 
     pair->leftEdge  = left;
@@ -607,51 +517,49 @@ ActiveEdgePair * ZBufferScanLine::generateEdgePair(ZEdge* left, ZEdge* right, ZP
 
     pair->polygon = &polygon;
 
-    // cout << "_______New_ pair________" << endl <<
-    // "left: (" << left->x << ", " << left->y << ", " << left->dx << ", " << left->dy << ", " << endl <<
-    // "right: (" << right->x << ", " << right->y << ", " << right->dx << ", " << right->dy << ", " << endl;
-
     // Insert the edge pair
     return pair;
 }
 
 void ZBufferScanLine::insertPolygon(Geometry::Face* face, GeometryResource* geometry, bool useTexture)
 {
-    vector<TextureResource *>* textures = &geometry->textures;
-
-    // Project points to screen space
+    // Save points in screen space
     vector<glm::vec3> projected;
+
+    projected.reserve(face->indices.size());
 
     for (int i = 0; i < face->indices.size(); i++)
     {
-        glm::vec4 projectedPoint = mvp_ * glm::vec4(face->vertices->at(face->indices[i])->position, 1.0f);
+        glm::vec4 projectedPoint = mvp_ * glm::vec4(face->vertices[face->indices[i]]->position, 1.0f);
         projectedPoint.x = (projectedPoint.x / projectedPoint.w + 0.5f) * (width_ - 1);
         projectedPoint.y = (projectedPoint.y / projectedPoint.w + 0.5f) * (height_ - 1);
-        projectedPoint.z = 1 / projectedPoint.w * 10.0f;
+        projectedPoint.z = 1 / projectedPoint.w;
 
         projected.push_back(projectedPoint);
     }
 
-    // Texture coordinate to use
+    // Save texture coordinates
     vector<glm::vec2> windowTexCoord;
 
     if (useTexture)
     {
+        windowTexCoord.reserve(face->indices.size());
+
         for (int i = 0; i < face->indices.size(); i++)
         {
-            windowTexCoord.push_back(face->vertices->at(face->indices[i])->texCoord);
+            windowTexCoord.push_back(face->vertices[face->indices[i]]->texCoord);
         }
     }
 
     // Backface culling
-    auto normal = computeNormal(projected[0], projected[1], projected[2]);
+    const glm::vec3& normal = computeNormal(projected[0], projected[1], projected[2]);
 
     if (glm::dot(normal, glm::vec3(0, 0, 1)) < FLT_EPS)
     {
         return;
     }
 
-    // A little recording
+    // Status recording
     glm::vec3 firstBegin;
     glm::vec3 lastEnd;
     glm::vec3 thisBegin;
@@ -684,8 +592,10 @@ void ZBufferScanLine::insertPolygon(Geometry::Face* face, GeometryResource* geom
         }
 
         // Clip edge to window size
-        if (clipEdge(p1, p2, projected[i], projected[next],
-                     tex1, tex2, zPolygon, useTexture, width_ - 1, height_ - 1) == REJECTED)
+        ClipResult res = viewClipping(p1, p2, projected[i], projected[next],
+                                      useTexture, tex1, tex2, zPolygon, width_ - 1, height_ - 1);
+
+        if (res == REJECTED)
         {
             continue;
         }
@@ -715,8 +625,7 @@ void ZBufferScanLine::insertPolygon(Geometry::Face* face, GeometryResource* geom
             if (glm::length(thisBegin - lastEnd) > SAME_PIXEL_LIMIT)
             {
                 zPolygon->edges.push_back(generateEdge(&lastEnd, &thisBegin, top, bottom,
-                                                       useTexture ? &lastTex : nullptr,
-                                                       useTexture ? &thisTex : nullptr));
+                                                       useTexture, lastTex, thisTex));
             }
         }
 
@@ -729,33 +638,44 @@ void ZBufferScanLine::insertPolygon(Geometry::Face* face, GeometryResource* geom
 
         // Insert this edge
         zPolygon->edges.push_back(generateEdge(&p1, &p2, top, bottom,
-                                               useTexture ? &tex1 : nullptr, useTexture ? &tex2 : nullptr));
+                                               useTexture, tex1, tex2));
     }
 
-    // Fix for first and last clipped edges
+    // Connect the first and last clipped edges
     if (glm::length(firstBegin - lastEnd) > SAME_PIXEL_LIMIT)
     {
         zPolygon->edges.push_back(generateEdge(&lastEnd, &firstBegin, top, bottom,
-                                               useTexture ? &lastTex : nullptr, useTexture ? &firstTex : nullptr));
+                                               useTexture, lastTex, firstTex));
+    }
+
+    for (auto edge : zPolygon->edges)
+    {
+        if (edge == nullptr)
+        {
+            delete zPolygon;
+            return;
+        }
     }
 
     // If nothing is inserted, cull this polygon out
     if ((top == -1) || (bottom == height_))
     {
         delete zPolygon;
-
         return;
     }
 
     // Insert polygon
-    fillColor(zPolygon->color, face->vertices->at(face->indices[0])->color, true);
+    colorCpy(zPolygon->color, face->vertices[face->indices[0]]->color, true);
     zPolygon->dy = top - bottom + 1;
 
     if (useTexture)
     {
-        zPolygon->textures = textures;
+        zPolygon->textures = &geometry->textures;
     }
 
     polygonTables_[top].push_back(zPolygon);
     numPolygon_++;
 }
+
+#undef SWAP
+#undef CLEARZ

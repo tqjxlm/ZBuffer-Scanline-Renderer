@@ -43,9 +43,7 @@ struct ZPolygon {
     EdgeTable                  unpairedEdges;
     vector<TextureResource *>* textures = nullptr;
 };
-typedef vector<ZPolygon *>      PolygonTable;
-typedef ZPolygon                ActivePolygon;
-typedef vector<ActivePolygon *> ActivePolygonTable;
+typedef vector<ZPolygon *> PolygonTable;
 
 struct ActiveEdgePair {
     ZEdge   * leftEdge  = nullptr;
@@ -81,8 +79,8 @@ public:
 
     void drawEdgePair(ActiveEdgePair& edgePair);
 
-    void insertActiveEdgePairs(int            lineIndex,
-                               ActivePolygon& polygon);
+    void insertActiveEdgePairs(int       lineIndex,
+                               ZPolygon& polygon);
 
     // Outer function
     void setMVP(const glm::mat4& MVP)
@@ -116,8 +114,9 @@ private:
                         glm::vec3* p2,
                         int      & top,
                         int      & bottom,
-                        glm::vec2* tex1 = nullptr,
-                        glm::vec2* tex2 = nullptr);
+                        bool       useTexture,
+                        glm::vec2  tex1,
+                        glm::vec2  tex2);
 
     ActiveEdgePair* generateEdgePair(ZEdge   * left,
                                      ZEdge   * right,
@@ -128,7 +127,6 @@ private:
     // OpenGL variables
     int width_;
     int height_;
-    int index_;
     GLfloat near_;
     GLfloat far_;
     glm::mat4 mvp_;
@@ -142,6 +140,6 @@ private:
 
     // Geometry tables
     vector<PolygonTable>polygonTables_;
-    ActivePolygonTable activePolygonTable_;
+    PolygonTable activePolygonTable_;
     ActiveEdgePairTable activeEdgePairTable_;
 };
