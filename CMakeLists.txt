@@ -38,20 +38,25 @@ find_package(OpenGL REQUIRED)
 include_directories(${OPENGL_INCLUDE_DIR})
 target_link_libraries(ScanLine INTERFACE ${OPENGL_LIBRARIES})
 
+find_package(OpenMP)
+if(OpenMP_CXX_FOUND)
+    target_link_libraries(ScanLine PUBLIC OpenMP::OpenMP_CXX)
+endif()
+
 find_package(glm CONFIG REQUIRED)
-target_link_libraries(ScanLine PRIVATE glm)
+target_link_libraries(ScanLine PUBLIC glm)
 
 find_package(glfw3 CONFIG REQUIRED)
-target_link_libraries(ScanLine PRIVATE glfw)
+target_link_libraries(ScanLine PUBLIC glfw)
 
 find_package(GLEW CONFIG REQUIRED)
-target_link_libraries(ScanLine PRIVATE GLEW::GLEW)
+target_link_libraries(ScanLine PUBLIC GLEW::GLEW)
 
 find_package(assimp CONFIG REQUIRED)
-target_link_libraries(ScanLine PRIVATE ${ASSIMP_LIBRARIES})
+target_link_libraries(ScanLine PUBLIC ${ASSIMP_LIBRARIES})
 
 find_package(SOIL CONFIG REQUIRED)
-target_link_libraries(ScanLine PRIVATE SOIL)
+target_link_libraries(ScanLine PUBLIC SOIL)
 
 if(WIN32)
     # visual studio running environment

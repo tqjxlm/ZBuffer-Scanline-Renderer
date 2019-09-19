@@ -13,17 +13,15 @@ class TextureResource;
 class DrawableObject;
 class ResourceManager;
 
-class Model
-{
+class Model {
 public:
-    Model()
-    {
-    }
 
-    Model(ResourceManager *manager):
+    Model()
+    {}
+
+    Model(ResourceManager *manager) :
         parentManager(manager)
-    {
-    }
+    {}
 
     Model(char *path)
     {
@@ -38,17 +36,23 @@ public:
     }
 
 private:
-    void  processNode(aiNode *node, const aiScene *scene);
 
-    void  processMesh(aiMesh *mesh, const aiScene *scene);
+    void processNode(aiNode        *node,
+                     const aiScene *scene);
 
-    void  loadMaterialTextures(aiMaterial *mat, aiTextureType type,
-                               string typeName, GeometryResource *geometryRc);
+    void processMesh(aiMesh        *mesh,
+                     const aiScene *scene);
+
+    void loadMaterialTextures(aiMaterial       *mat,
+                              aiTextureType     type,
+                              string            typeName,
+                              GeometryResource *geometryRc);
 
 private:
-    ResourceManager            *parentManager;
-    DrawableObject             *object;
-    vector<GeometryResource *>  geometryRcs;
-    string                      directory;
-    int                         totalTextureLoaded = 0;
+
+    ResourceManager *parentManager;
+    DrawableObject *object;
+    vector<GeometryResource *>geometryRcs;
+    string directory;
+    int totalTextureLoaded = 0;
 };

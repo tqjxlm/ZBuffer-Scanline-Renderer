@@ -7,13 +7,14 @@
 #include "Geometry.h"
 #include "ResourceManager.h"
 
-void  Model::loadModel(string path)
+void Model::loadModel(string path)
 {
-    Assimp::Importer  import;
-    const aiScene    *scene = import.ReadFile(path,
-                                              // 0);
-                                              aiProcess_OptimizeMeshes | aiProcess_OptimizeGraph
-                                              | aiProcess_Triangulate);
+    Assimp::Importer import;
+    const aiScene   *scene = import.ReadFile(path,
+
+// 0);
+                                             aiProcess_OptimizeMeshes | aiProcess_OptimizeGraph
+                                             | aiProcess_Triangulate);
 
     if (!scene || (scene->mFlags == AI_SCENE_FLAGS_INCOMPLETE) || !scene->mRootNode)
     {
@@ -35,28 +36,28 @@ void  Model::loadModel(string path)
     }
 }
 
-void  Model::processNode(aiNode *node, const aiScene *scene)
+void Model::processNode(aiNode *node, const aiScene *scene)
 {
     // Process all the node's meshes (if any)
-    for (GLuint i = 0; i < node->mNumMeshes; i++)
+    for (unsigned int i = 0; i < node->mNumMeshes; i++)
     {
         aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
         this->processMesh(mesh, scene);
     }
 
     // Then do the same for each of its children
-    for (GLuint i = 0; i < node->mNumChildren; i++)
+    for (unsigned int i = 0; i < node->mNumChildren; i++)
     {
         this->processNode(node->mChildren[i], scene);
     }
 }
 
-void  Model::processMesh(aiMesh *mesh, const aiScene *scene)
+void Model::processMesh(aiMesh *mesh, const aiScene *scene)
 {
-    auto  geometryRc = new GeometryResource;
-    int   triCnt     = 0;
+    auto geometryRc = new GeometryResource;
+    int  triCnt     = 0;
 
-    for (GLuint i = 0; i < mesh->mNumVertices; i++)
+    for (unsigned int i = 0; i < mesh->mNumVertices; i++)
     {
         Geometry::Vertice *vertice = new Geometry::Vertice;
 
@@ -73,7 +74,7 @@ void  Model::processMesh(aiMesh *mesh, const aiScene *scene)
 
         if (mesh->HasVertexColors(0))
         {
-            unsigned char  color[] = {
+            unsigned char color[] = {
                 static_cast<unsigned char>(mesh->mColors[0][i].r * 255),
                 static_cast<unsigned char>(mesh->mColors[0][i].g * 255),
                 static_cast<unsigned char>(mesh->mColors[0][i].b * 255),
@@ -95,12 +96,12 @@ void  Model::processMesh(aiMesh *mesh, const aiScene *scene)
     }
 
     // Process indices
-    for (GLuint i = 0; i < mesh->mNumFaces; i++)
+    for (unsigned int i = 0; i < mesh->mNumFaces; i++)
     {
-        aiFace          face     = mesh->mFaces[i];
+        aiFace face              = mesh->mFaces[i];
         Geometry::Face *geomFace = new Geometry::Face(&geometryRc->vertices);
 
-        for (GLuint j = 0; j < face.mNumIndices; j++)
+        for (unsigned int j = 0; j < face.mNumIndices; j++)
         {
             geomFace->indices.push_back(face.mIndices[j]);
         }
@@ -127,17 +128,17 @@ void  Model::processMesh(aiMesh *mesh, const aiScene *scene)
     geometryRcs.push_back(geometryRc);
 }
 
-void  Model::loadMaterialTextures(aiMaterial *mat, aiTextureType type, string typeName, GeometryResource *geometryRc)
+void Model::loadMaterialTextures(aiMaterial *mat, aiTextureType type, string typeName, GeometryResource *geometryRc)
 {
-    for (GLuint i = 0; i < mat->GetTextureCount(type); i++)
+    for (unsigned int i = 0; i < mat->GetTextureCount(type); i++)
     {
-        aiString  str;
+        aiString str;
         mat->GetTexture(type, i, &str);
 
-        string  filename = string(str.C_Str());
+        string filename = string(str.C_Str());
         filename = directory + '/' + filename;
 
-        auto  loadedTexture = parentManager->getTextureResource(filename);
+        auto loadedTexture = parentManager->getTextureResource(filename);
 
         if (loadedTexture == NULL)
         {

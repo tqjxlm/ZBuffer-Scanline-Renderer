@@ -2,27 +2,27 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 
-#include <thread>         // std::this_thread::sleep_for
-#include <chrono>         // std::chrono::seconds
+#include <thread> // std::this_thread::sleep_for
+#include <chrono> // std::chrono::seconds
 
 #include "ZBufferScanLine.h"
 #include "Shader.h"
 
 MainWindow *MainWindow::instance = NULL;
-bool        MainWindow::keys[1024];
-double      MainWindow::lastX        = 400;
-double      MainWindow::lastY        = 300;
-bool        MainWindow::firstMouse   = true;
-bool        MainWindow::leftPushed   = false;
-bool        MainWindow::rightPushed  = false;
-bool        MainWindow::isRendering  = true;
-float       MainWindow::deltaTime    = 0.0;
-float       MainWindow::currentFrame = 0.0;
-float       MainWindow::lastFrame    = 0.0;
-float       MainWindow::timerFrame;
-int         MainWindow::showModel = 0;
+bool   MainWindow::keys[1024];
+double MainWindow::lastX        = 400;
+double MainWindow::lastY        = 300;
+bool   MainWindow::firstMouse   = true;
+bool   MainWindow::leftPushed   = false;
+bool   MainWindow::rightPushed  = false;
+bool   MainWindow::isRendering  = true;
+float  MainWindow::deltaTime    = 0.0;
+float  MainWindow::currentFrame = 0.0;
+float  MainWindow::lastFrame    = 0.0;
+float  MainWindow::timerFrame;
+int    MainWindow::showModel = 0;
 
-MainWindow::MainWindow():
+MainWindow::MainWindow() :
     _camera(90.0f, 0.0f, 50.0f)
 {
     instance         = this;
@@ -45,7 +45,7 @@ MainWindow::~MainWindow()
     glDeleteBuffersARB(2, _pbo);
 }
 
-void  MainWindow::init()
+void MainWindow::init()
 {
     initOpenGL();
     loadResources();
@@ -53,7 +53,7 @@ void  MainWindow::init()
     initTexture();
 }
 
-void  MainWindow::gameLoop()
+void MainWindow::gameLoop()
 {
     while (!glfwWindowShouldClose(_window))
     {
@@ -85,8 +85,8 @@ void  MainWindow::gameLoop()
         // catchGLError("Main Loop");
 
         // Print FPS
-        static float  tick  = currentFrame;
-        static int    count = 0;
+        static float tick  = currentFrame;
+        static int   count = 0;
 
         if (currentFrame - tick > 0.5f)
         {
@@ -101,10 +101,10 @@ void  MainWindow::gameLoop()
     }
 }
 
-void  MainWindow::drawToPBO()
+void MainWindow::drawToPBO()
 {
-    static int  index     = 0;
-    int         nextIndex = 0;        // pbo index used for next frame
+    static int index = 0;
+    int nextIndex    = 0; // pbo index used for next frame
 
     index     = (index + 1) % 2;
     nextIndex = (index + 1) % 2;
@@ -123,7 +123,7 @@ void  MainWindow::drawToPBO()
     glBufferDataARB(GL_PIXEL_UNPACK_BUFFER_ARB, _bufferSize, _textureImage[nextIndex], GL_STREAM_DRAW_ARB);
 }
 
-void  MainWindow::keyboardEvent(GLFWwindow *window, int key, int scancode, int action, int mode)
+void MainWindow::keyboardEvent(GLFWwindow *window, int key, int scancode, int action, int mode)
 {
     if ((key == GLFW_KEY_ESCAPE) && (action == GLFW_PRESS))
     {
@@ -145,7 +145,7 @@ void  MainWindow::keyboardEvent(GLFWwindow *window, int key, int scancode, int a
     }
 }
 
-void  MainWindow::cursorMoveEvent(GLFWwindow *window, double xpos, double ypos)
+void MainWindow::cursorMoveEvent(GLFWwindow *window, double xpos, double ypos)
 {
     if (firstMouse)
     {
@@ -154,25 +154,25 @@ void  MainWindow::cursorMoveEvent(GLFWwindow *window, double xpos, double ypos)
         firstMouse = false;
     }
 
-    double  xoffset = xpos - lastX;
-    double  yoffset = lastY - ypos;
+    double xoffset = xpos - lastX;
+    double yoffset = lastY - ypos;
 
     lastX = xpos;
     lastY = ypos;
 
-    if ((instance->_camera.getMode() == WALK_THROUGH)
-        || ((instance->_camera.getMode() == TRACK_BALL) && leftPushed))
+    if ((instance->_camera.getMode() == Camera::WALK_THROUGH)
+        || ((instance->_camera.getMode() == Camera::TRACK_BALL) && leftPushed))
     {
         instance->_camera.ProcessMouseMovement(static_cast<GLfloat>(xoffset), static_cast<GLfloat>(yoffset));
     }
 }
 
-void  MainWindow::scrollCallEvent(GLFWwindow *window, double xoffset, double yoffset)
+void MainWindow::scrollCallEvent(GLFWwindow *window, double xoffset, double yoffset)
 {
     instance->_camera.ProcessMouseScroll(static_cast<GLfloat>(yoffset));
 }
 
-void  MainWindow::mouseButtonEvent(GLFWwindow *window, int button, int action, int mode)
+void MainWindow::mouseButtonEvent(GLFWwindow *window, int button, int action, int mode)
 {
     switch (button)
     {
@@ -205,14 +205,14 @@ void  MainWindow::mouseButtonEvent(GLFWwindow *window, int button, int action, i
     }
 }
 
-void  MainWindow::initOpenGL()
+void MainWindow::initOpenGL()
 {
     // Init GLFW
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
+    glfwWindowHint(       GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(            GLFW_RESIZABLE, GL_FALSE);
 
     _window = glfwCreateWindow(_windowWidth, _windowHeight, "Z-buffer Scanline by tqjxlm", nullptr, nullptr); // Windowed
     glfwMakeContextCurrent(_window);
@@ -240,10 +240,13 @@ void  MainWindow::initOpenGL()
     // Init global matrices
 
     _viewMatrix       = _camera.GetViewMatrix();
-    _projectionMatrix = glm::perspective(glm::radians(45.0f), (float)_textureWidth / (float)_textureHeight, _nearPlane, _farPlane);
+    _projectionMatrix = glm::perspective(glm::radians(45.0f),
+                                         (float)_textureWidth / (float)_textureHeight,
+                                         _nearPlane,
+                                         _farPlane);
 }
 
-void  MainWindow::initPixelBuffer()
+void MainWindow::initPixelBuffer()
 {
     glGenBuffersARB(2, _pbo);
     glBindBufferARB(GL_PIXEL_UNPACK_BUFFER_ARB, _pbo[1]);
@@ -255,30 +258,29 @@ void  MainWindow::initPixelBuffer()
     _screenShader = new Shader("resources/shaders/screenShader.vert", "resources/shaders/screenShader.frag");
 }
 
-void  MainWindow::initFrameBuffer()
-{
-}
+void MainWindow::initFrameBuffer()
+{}
 
-void  MainWindow::loadResources()
+void MainWindow::loadResources()
 {
     loadDrawableObjects();
 }
 
-void  MainWindow::processScene()
+void MainWindow::processScene()
 {
     _scanLine->reset();
 
     _scanLine->setViewDir(_camera.getFront());
 
-    for each (DrawableObject *object in _drawableObjects)
+    for (DrawableObject *object: _drawableObjects)
     {
         // Set mvp matrix for this model
         _scanLine->setMVP(_projectionMatrix * _viewMatrix * object->modelMatrix);
 
         // Insert polygon into scanline pipeline
-        for each (auto geometry in object->geometries)
+        for (auto geometry: object->geometries)
         {
-            for each (Geometry::Face *face in geometry->faces)
+            for (auto face: geometry->faces)
             {
                 _scanLine->insertPolygon(face, geometry, object->useTexture);
             }
@@ -286,13 +288,13 @@ void  MainWindow::processScene()
     }
 }
 
-void  MainWindow::renderScene(GLubyte *buffer)
+void MainWindow::renderScene(GLubyte *buffer)
 {
     _scanLine->draw(buffer);
 }
 
 // Shader version
-void  MainWindow::drawToScreen()
+void MainWindow::drawToScreen()
 {
     // Draw a quad on screen using rendered texture
     _screenShader->use();
@@ -303,20 +305,21 @@ void  MainWindow::drawToScreen()
     renderQuad();
 }
 
-void  MainWindow::renderQuad()
+void MainWindow::renderQuad()
 {
-    static GLuint  quadVAO;
+    static GLuint quadVAO;
 
     if (quadVAO == 0)
     {
-        GLuint  quadVBO;
-        float   quadVertices[] = {
+        GLuint quadVBO;
+        float  quadVertices[] = {
             // positions        // texture Coords
-            -1.0f,  1.0f, 0.0f, 0.0f, 1.0f,
-            -1.0f, -1.0f, 0.0f, 0.0f, 0.0f,
-            1.0f,   1.0f, 0.0f, 1.0f, 1.0f,
-            1.0f,  -1.0f, 0.0f, 1.0f, 0.0f,
+            -1.0f, 1.0f,   0.0f,   0.0f,   1.0f,
+            -1.0f, -1.0f,  0.0f,   0.0f,   0.0f,
+            1.0f,  1.0f,   0.0f,   1.0f,   1.0f,
+            1.0f,  -1.0f,  0.0f,   1.0f,   0.0f,
         };
+
         // setup plane VAO
         glGenVertexArrays(1, &quadVAO);
         glGenBuffers(1, &quadVBO);
@@ -334,9 +337,9 @@ void  MainWindow::renderQuad()
     glBindVertexArray(0);
 }
 
-void  MainWindow::loadDrawableObjects()
+void MainWindow::loadDrawableObjects()
 {
-    glm::mat4       model(1.0);
+    glm::mat4 model(1.0);
     DrawableObject *resource;
 
     // Load models
@@ -345,6 +348,7 @@ void  MainWindow::loadDrawableObjects()
     case (0):
         _drawableObjects.push_back(_resourceManager.loadCube());
         break;
+
     case (1):
         model    = glm::translate(model, glm::vec3(0.0, -1.0, 0.0));
         model    = glm::scale(model, glm::vec3(0.01, 0.01, 0.01));
@@ -357,6 +361,7 @@ void  MainWindow::loadDrawableObjects()
 
         _drawableObjects.push_back(resource);
         break;
+
     case (2):
         model    = glm::translate(model, glm::vec3(0.0, -0.2, 0.0));
         model    = glm::scale(model, glm::vec3(0.001f, 0.001f, 0.001f));
@@ -369,6 +374,7 @@ void  MainWindow::loadDrawableObjects()
 
         _drawableObjects.push_back(resource);
         break;
+
     case (3):
         model    = glm::translate(model, glm::vec3(0, -1, 0));
         resource = _resourceManager.loadModel("resources/models/T-90/T-90.obj", model);
@@ -380,6 +386,7 @@ void  MainWindow::loadDrawableObjects()
 
         _drawableObjects.push_back(resource);
         break;
+
     case (4):
         model    = glm::scale(model, glm::vec3(0.1, 0.1, 0.1));
         model    = glm::translate(model, glm::vec3(0, -7, 0));
@@ -392,46 +399,47 @@ void  MainWindow::loadDrawableObjects()
 
         _drawableObjects.push_back(resource);
         break;
+
     default:
         break;
     }
 }
 
-void  MainWindow::initTexture()
+void MainWindow::initTexture()
 {
     glGenTextures(1, &_screenTexture);
     glBindTexture(GL_TEXTURE_2D, _screenTexture);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S,      GL_CLAMP);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T,      GL_CLAMP);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, _textureWidth, _textureHeight, 0, GL_BGRA, GL_UNSIGNED_INT_8_8_8_8_REV, 0);
     glBindTexture(GL_TEXTURE_2D, 0);
 }
 
-void  MainWindow::doMovement()
+void MainWindow::doMovement()
 {
-    if (_camera.getMode() == WALK_THROUGH)
+    if (_camera.getMode() == Camera::WALK_THROUGH)
     {
         // Camera controls
         if (keys[GLFW_KEY_W])
         {
-            _camera.ProcessKeyboard(FORWARD, deltaTime);
+            _camera.ProcessKeyboard(Camera::FORWARD, deltaTime);
         }
 
         if (keys[GLFW_KEY_S])
         {
-            _camera.ProcessKeyboard(BACKWARD, deltaTime);
+            _camera.ProcessKeyboard(Camera::BACKWARD, deltaTime);
         }
 
         if (keys[GLFW_KEY_A])
         {
-            _camera.ProcessKeyboard(LEFT, deltaTime);
+            _camera.ProcessKeyboard(Camera::LEFT, deltaTime);
         }
 
         if (keys[GLFW_KEY_D])
         {
-            _camera.ProcessKeyboard(RIGHT, deltaTime);
+            _camera.ProcessKeyboard(Camera::RIGHT, deltaTime);
         }
     }
 }

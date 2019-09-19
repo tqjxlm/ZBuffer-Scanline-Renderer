@@ -3,96 +3,103 @@
 #include "Geometry.h"
 
 #include <string>
-#include <map>
-#include <set>
+#include <unordered_map>
 #include <vector>
-using namespace std;
 
-class TextureResource
-{
+class TextureResource {
 public:
+
     TextureResource()
-    {
-    }
+    {}
 
     ~TextureResource()
     {
         delete texture;
     }
 
-    string             type;
-    string             path;
+    std::string type;
+    std::string path;
     Geometry::Texture *texture;
 };
 
-class GeometryResource
-{
+class GeometryResource {
 public:
+
     GeometryResource()
-    {
-    }
+    {}
 
     ~GeometryResource()
     {
-        for each (auto vertice in vertices)
+        for (auto vertice: vertices)
         {
             delete vertice;
         }
 
-        for each (auto face in faces)
+        for (auto face: faces)
         {
             delete face;
         }
     }
 
-    vector<Geometry::Vertice *>  vertices;
-    vector<Geometry::Face *>     faces;
-    vector<TextureResource *>    textures;
+    std::vector<Geometry::Vertice *>vertices;
+    std::vector<Geometry::Face *>faces;
+    std::vector<TextureResource *>textures;
 };
 
-class DrawableObject
-{
+class DrawableObject {
 public:
-    DrawableObject(GeometryResource *geometry, glm::mat4 modelMatrix = glm::mat4()):
+
+    DrawableObject(GeometryResource *geometry, glm::mat4 modelMatrix = glm::mat4()) :
         modelMatrix(modelMatrix), useTexture(false)
     {
         this->geometries.push_back(geometry);
     }
 
-    DrawableObject(vector<GeometryResource *> geometry, glm::mat4 modelMatrix = glm::mat4()):
+    DrawableObject(std::vector<GeometryResource *>geometry, glm::mat4 modelMatrix = glm::mat4()) :
         geometries(geometry), modelMatrix(modelMatrix), useTexture(false)
-    {
-    }
+    {}
 
-    glm::mat4                   modelMatrix;
-    bool                        useTexture;
-    vector<GeometryResource *>  geometries;
+    glm::mat4 modelMatrix;
+    bool useTexture;
+    std::vector<GeometryResource *>geometries;
 };
 
-class ResourceManager
-{
+class ResourceManager {
 public:
+
     ResourceManager();
 
     ~ResourceManager();
 
-    DrawableObject* loadCube(const glm::mat4 &modelMatrix = glm::mat4(), string id = string());
+    DrawableObject* loadCube(const glm::mat4& modelMatrix = glm::mat4(),
+                             std::string      id          = std::string());
 
-    DrawableObject* loadCube(const glm::vec4 &color, const glm::mat4 &modelMatrix = glm::mat4(), string id = string());
+    DrawableObject* loadCube(const glm::vec4& color,
+                             const glm::mat4& modelMatrix = glm::mat4(),
+                             std::string      id          = std::string());
 
-    DrawableObject* loadSphere(const glm::mat4 &modelMatrix = glm::mat4(), string id = string());
+    DrawableObject* loadSphere(const glm::mat4& modelMatrix = glm::mat4(),
+                               std::string      id          = std::string());
 
-    DrawableObject* loadTriangle(const glm::vec4 &color = glm::vec4(255, 255, 255, 255), const glm::mat4 &modelMatrix = glm::mat4(), string id = string());
+    DrawableObject* loadTriangle(const glm::vec4& color       = glm::vec4(255, 255, 255, 255),
+                                 const glm::mat4& modelMatrix = glm::mat4(),
+                                 std::string id               = std::string());
 
-    DrawableObject* loadQuad(const glm::vec4 &color = glm::vec4(255, 255, 255, 255), const glm::mat4 &modelMatrix = glm::mat4(), string id = string());
+    DrawableObject* loadQuad(const glm::vec4& color       = glm::vec4(255, 255, 255, 255),
+                             const glm::mat4& modelMatrix = glm::mat4(),
+                             std::string id               = std::string());
 
-    DrawableObject* loadModel(const string &path, const glm::mat4 &modelMatrix = glm::mat4(), string id = string());
+    DrawableObject* loadModel(const std::string& path,
+                              const glm::mat4  & modelMatrix = glm::mat4(),
+                              std::string        id          = std::string());
 
-    DrawableObject* loadTexturedQuad(const string &texturePath, const glm::mat4 &modelMatrix = glm::mat4(), string id = string());
+    DrawableObject* loadTexturedQuad(const std::string& texturePath,
+                                     const glm::mat4  & modelMatrix = glm::mat4(),
+                                     std::string        id          = std::string());
 
-    DrawableObject* getDrawableObject(string key)
+    DrawableObject* getDrawableObject(std::string key)
     {
-        auto  loaded = _loadedObjects.find(key);
+        auto loaded = _loadedObjects.find(key);
 
         if (loaded == _loadedObjects.end())
         {
@@ -104,9 +111,9 @@ public:
         }
     }
 
-    GeometryResource* getGeometryResource(string key)
+    GeometryResource* getGeometryResource(std::string key)
     {
-        auto  loaded = _loadedGeometries.find(key);
+        auto loaded = _loadedGeometries.find(key);
 
         if (loaded == _loadedGeometries.end())
         {
@@ -118,9 +125,9 @@ public:
         }
     }
 
-    TextureResource* getTextureResource(string key)
+    TextureResource* getTextureResource(std::string key)
     {
-        auto  loaded = _loadedTextures.find(key);
+        auto loaded = _loadedTextures.find(key);
 
         if (loaded == _loadedTextures.end())
         {
@@ -132,7 +139,7 @@ public:
         }
     }
 
-    TextureResource* loadTextureResource(const string &path, const string &typeName, string id)
+    TextureResource* loadTextureResource(const std::string& path, const std::string& typeName, std::string id)
     {
         TextureResource   *resource = new TextureResource;
         Geometry::Texture *texture  = TextureFromFile(path);
@@ -152,9 +159,10 @@ public:
     }
 
 private:
-    Geometry::Texture* TextureFromFile(const string &path);
 
-    map<string, DrawableObject *>    _loadedObjects;
-    map<string, GeometryResource *>  _loadedGeometries;
-    map<string, TextureResource *>   _loadedTextures;
+    Geometry::Texture* TextureFromFile(const std::string& path);
+
+    std::unordered_map<std::string, DrawableObject *>_loadedObjects;
+    std::unordered_map<std::string, GeometryResource *>_loadedGeometries;
+    std::unordered_map<std::string, TextureResource *>_loadedTextures;
 };
